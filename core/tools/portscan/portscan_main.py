@@ -29,7 +29,6 @@ def get_system():
         exit(1)
 
 
-# 进度记录,基于json
 def progress_record(date=None,target=None,module=None,value=None,finished=False):
     logfile = f"result/{date}/log.json"
     if os.path.exists(logfile) is False:
@@ -37,10 +36,9 @@ def progress_record(date=None,target=None,module=None,value=None,finished=False)
     with open(logfile, "r", encoding="utf-8") as f1:
         log_json = json.loads(f1.read())
     if finished is False:
-        # 读取log.json 如果是false则扫描，是true则跳过
         if log_json[module] is False:
             return False
-        elif log_json[module] is True:# 即log_json[module] 为true的情况
+        elif log_json[module] is True:
             return True
     elif finished is True:
         log_json[module] = True
@@ -58,16 +56,13 @@ def manager(domain=None, ip=None, ipfile=None, date="2022-09-02-00-01-39"):
     pwd_and_file = os.path.abspath(__file__)
     pwd = os.path.dirname(pwd_and_file)  # E:\ccode\python\006_lunzi\core\tools\domain
 
-    # 获取当前目录的前三级目录，即到domain目录下，来寻找exe domain目录下
     grader_father = os.path.abspath(os.path.dirname(pwd_and_file) + os.path.sep + "../..")
     # print(grader_father) # E:\ccode\python\006_lunzi\core
 
-    # 创建存储工具扫描结果的文件夹
     portscan_log_folder = f"result/{date}/portscan_log"
     if os.path.exists(portscan_log_folder) is False:
         os.makedirs(portscan_log_folder)
 
-    # 三种模式
     if domain and ip is None and ipfile is None:
         ipfile = f'result/{date}/{domain}.subdomains.ips.txt'
         output_filename_prefix = domain
@@ -83,8 +78,6 @@ def manager(domain=None, ip=None, ipfile=None, date="2022-09-02-00-01-39"):
         logger.error("[-] Please --domain or --ip or --ipfile")
         exit(1)
 
-    # naabu 可以对域名反查ip然后端口扫描，也可以对ips进行端口扫描
-    # 目前实现对ipfile和子域名的扫描
     @logger.catch
     def naabu(ip=ip, ipfile=ipfile):
         '''
@@ -101,9 +94,7 @@ def manager(domain=None, ip=None, ipfile=None, date="2022-09-02-00-01-39"):
         # print(domain,ip,ips,ipfile)
         outputfile = f'{portscan_log_folder}/{output_filename_prefix}.{sys._getframe().f_code.co_name}.txt'
         cmdstr = f'{pwd}/naabu/naabu{suffix} -source-ip 8.8.8.8:22 -rate 150 -top-ports 100 -silent -no-color -list {ipfile} -o {outputfile}'
-        # naabu -list hosts.txt -p - 扫描全部  -exclude-cdn 跳过cdn检测，cdn只检查80 443
         # cmd = pwd + f'/naabu{suffix} -p "{ports_str}" -silent -no-color -scan-all-ips -list result/{date}/{domain}.final.subdomains.txt -o {portscan_log_folder}/{domain}.{sys._getframe().f_code.co_name}.txt'
-        # nmap 常见100个端口 -scan-all-ips
         # cmdstr = f'{pwd}/naabu{suffix} -top-ports 100 -silent -no-color -list result/{date}/{domain}.final.subdomains.txt -o {portscan_log_folder}/{domain}.{sys._getframe().f_code.co_name}.txt'
         logger.info(f"[+] command:{cmdstr}")
         os.system(cmdstr)
@@ -129,7 +120,6 @@ def manager(domain=None, ip=None, ipfile=None, date="2022-09-02-00-01-39"):
         os.system(cmdstr)
         logger.info(f'[+] {sys._getframe().f_code.co_name} finished,outputfile:{outputfile}')
 
-    # win不可用先剔除
     @logger.catch
     def dismap(ip=ip, ipfile=ipfile):
         '''
@@ -150,7 +140,6 @@ def manager(domain=None, ip=None, ipfile=None, date="2022-09-02-00-01-39"):
         os.system(cmdstr)
         logger.info(f'[+] {sys._getframe().f_code.co_name} finished,outputfile:{outputfile}')
 
-    # 写好了，暂不调用了，这个项目使用了nmap的库，并对端口进行指纹识别，同时也借用了naabu的思路，但是是2020年的，同时使用的是connect连接，不是syn
     @logger.catch
     def nmaps(ip=ip, ipfile=ipfile):
         '''
@@ -195,7 +184,6 @@ def run(ip=None, ips=None, ipfile=None, date=None):
     :param str  urlfile:    File path of ipfile per line
     :return:
     '''
-    # 后面吧ip 支持cidr,去掉ips参数
     create_logfile()
     import datetime
     date1 = str(datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S"))

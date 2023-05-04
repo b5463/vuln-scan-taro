@@ -15,7 +15,6 @@ import tldextract
 from loguru import logger
 import sys
 
-# 判断是否是泛解析
 import dns
 
 
@@ -52,7 +51,6 @@ def get_system():
         exit(1)
 
 
-# 打印脚本跑出了几个新的子域名，并返回最新最全的子域名列表  传递两个列表，old是前面收集好的子域名，new是刚跑完的脚本收集的子域名，进行比较.
 def printGetNewSubdomains(old_subdomains, new_subdomains):
     if len(old_subdomains) > 0:
         newSubdomains = list(set(new_subdomains) - set(old_subdomains))
@@ -60,8 +58,6 @@ def printGetNewSubdomains(old_subdomains, new_subdomains):
     return list(set(new_subdomains + old_subdomains))
 
 
-# 每个函数的结果都存到 result/{date}/domain_log下
-# 装饰器
 def additional(func1):
     def init2():
         logger.info(f'[+] start {func1.__qualname__}')
@@ -72,7 +68,6 @@ def additional(func1):
     # pass
 
 
-# 过程记录文件初始化
 def progress_init(date=None, targets: list = []):
     logfile = f'result/{date}/{date}_log.json'
     log = {
@@ -92,7 +87,6 @@ def progress_init(date=None, targets: list = []):
         logger.info(f'[+] Create logjson: {logfile}')
 
 
-# 更新过程记录
 def progress_control(module: str = None, target: str = None, finished: bool = False, date: str = None):
     logfile = f'result/{date}/{date}_log.json'
     if os.path.exists(logfile) is False:
@@ -118,8 +112,6 @@ def progress_control(module: str = None, target: str = None, finished: bool = Fa
     return log_json['scanning_target']
 
 
-
-# 进度记录,基于json
 def progress_record(date=None,target=None,module=None,value=None,finished=False):
     logfile = f"result/{date}/log.json"
     if os.path.exists(logfile) is False:
@@ -127,13 +119,12 @@ def progress_record(date=None,target=None,module=None,value=None,finished=False)
     with open(logfile, 'r', encoding='utf-8') as f1:
         log_json = json.loads(f1.read())
     # if module in dict(log_json).keys() and target:
-    # 先检查是否存在于scanned_targets 不存在则开始扫
     if finished is False:
         if target not in log_json[module]["scanned_targets"]:
             return False
         else:
             return True
-        # finished flag设置则证明扫描完成
+
     elif finished is True:
         log_json[module]["scanned_targets"].append(target)
         with open(logfile, "w", encoding="utf-8") as f:
@@ -141,7 +132,6 @@ def progress_record(date=None,target=None,module=None,value=None,finished=False)
         return True
 
 
-# 过程记录,暂时弃用
 def progress_record__(date=None,target=None,module=None,finished=False):
     logfile = f"result/{date}/log/{module}_log.json"
     if os.path.exists(f"result/{date}/log") is False:
@@ -149,12 +139,10 @@ def progress_record__(date=None,target=None,module=None,finished=False):
     if finished is False:
         with open(logfile, 'r', encoding='utf-8') as f1:
             targets = f1.readlines()
-        # 如果不存在则扫描
         if target+"\n" not in targets:
             return False
         else:
             return True
-    # 存在则存储跳过
     else:
         with open(logfile, 'a', encoding='utf-8') as f1:
             f1.write(target+"\n")
@@ -181,7 +169,6 @@ def kill_process(processname):
         return False
 
 
-# 启用子进程执行外部shell命令
 # @logger.catch
 def __subprocess1(cmd, timeout=None, path=None):
     '''
@@ -200,7 +187,6 @@ def __subprocess1(cmd, timeout=None, path=None):
     #     logger.error(f'[-] cmd type error,cmd should be a string or list: {cmd}')
     #     return
     try:
-        # 执行外部shell命令， 输出结果存入临时文件中
         # logger.info(f"[+] command:{' '.join(cmd)}")
         p = subprocess.Popen(cmd, shell=True, cwd=path)
         # p = subprocess.Popen(cmd, shell=True,cwd=path,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -251,18 +237,16 @@ def __subprocess2(cmd):
 # @progress_control(module="domain_scan",date=date)
 @logger.catch
 def manager(domain=None, date="2022-09-02-00-01-39"):
-    subdomains = list()  # 用于存储最后的子域名结果
+    subdomains = list()
     subdomains_tmp = list()
     suffix = get_system()
     root = os.getcwd()
     pwd_and_file = os.path.abspath(__file__)
     pwd = os.path.dirname(pwd_and_file)  # E:\ccode\python\006_lunzi\core\tools\domain
 
-    # 获取当前目录的前三级目录，即到domain目录下，来寻找exe domain目录下
     grader_father = os.path.abspath(os.path.dirname(pwd_and_file) + os.path.sep + "../..")
     # print(grader_father) # E:\ccode\python\006_lunzi\core
 
-    # 创建存储子域名工具扫描结果的文件夹
     subdomains_log_folder = f"result/{date}/domain_log"
     if os.path.exists(subdomains_log_folder) is False:
         os.makedirs(subdomains_log_folder)
@@ -270,12 +254,9 @@ def manager(domain=None, date="2022-09-02-00-01-39"):
         os.makedirs(f"result/temp/")
 
 
-    # 执行命令
     @logger.catch
     def runcmd(toolname, cmd, subdomain_file):
         '''
-        运行命令，如果工具执行结果文件只包含子域名，则从文件提取子域名，存到subdomains->list
-        如果工具执行结果文件不只是包含子域名，比如amass输出的是json，则在工具对应函数自行从结果文件提取子域名，存到subdomains->list
         :param cmd:
         :return:
         '''
@@ -295,7 +276,6 @@ def manager(domain=None, date="2022-09-02-00-01-39"):
     # subdomains = printGetNewSubdomains(subdomains, othersApiTotalSubdomains)
     # print('len [{}]'.format(len(subdomains)))
 
-    # 调用amass 结果输出到json
     @logger.catch
     def amass():
         '''
@@ -310,7 +290,6 @@ def manager(domain=None, date="2022-09-02-00-01-39"):
         cmdstr = f'{pwd}/amass/amass{suffix} enum -active -brute -max-depth 3 -d {domain} -json {output_filename}'  # 三层有点慢
         # cmdstr = f'{pwd}/amass/amass{suffix} enum -active -brute -d {domain} -json {output_filename}'
         runcmd(sys._getframe().f_code.co_name, cmdstr, "")
-        # 输出文件内容不只是域名的话则需要自行处理，提取子域名，然后转储
         with open(output_filename, 'r', encoding='utf-8') as fd:
             for line in fd.readlines():
                 amass_data = json.loads(line.strip())
@@ -319,7 +298,6 @@ def manager(domain=None, date="2022-09-02-00-01-39"):
         subdomains.extend(list(set(subdomains_tmp)))
         # print(subdomains)
 
-    # 调用ksubdomain 结果输出到txt
     @logger.catch
     def ksubdomain():
         '''
@@ -338,8 +316,7 @@ def manager(domain=None, date="2022-09-02-00-01-39"):
         #         subdomains_tmp.append(line.strip())
         # subdomains.extend(list(set(subdomains_tmp)))
         # print(subdomains)
-
-    # 调用amass 结果输出到json 留一个原版样例，好以后迁移独立使用
+        
     # def amass_yuanban():
     #     '''
     #
@@ -361,10 +338,8 @@ def manager(domain=None, date="2022-09-02-00-01-39"):
     #
     #     subdomains.extend(list(set(subdomains_tmp)))
     #     # print(subdomains)
-    #     # 移除临时文件
     #     # os.remove("result/temp/"+ self.domain+'.amass.json')
 
-    # 水泽 暂时先不要，主要就是为了用他的搜索引擎部分，可以看改的源码
     @logger.catch
     def ShuiZe():
         logger.info('-' * 10 + f'start {sys._getframe().f_code.co_name}' + '-' * 10)
@@ -374,7 +349,6 @@ def manager(domain=None, date="2022-09-02-00-01-39"):
         os.system(cmd)
         # command = ["python3",pwd + "\\ShuiZe\\ShuiZe.py", "-d", domain, "--justInfoGather", "1", "--output", f"result/{date}/{domain}.ShuiZe.txt"]
         # p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        # return_code = p.wait()  # 等待子进程结束，并返回状态码；
 
         with open(f"result/{date}/{domain}.ShuiZe.txt", 'r', encoding='utf-8') as fd:
             for line in fd.readlines():
@@ -391,7 +365,7 @@ def manager(domain=None, date="2022-09-02-00-01-39"):
         '''
         pass
         # dnsx -silent -d facebook.com -w dns_worldlist.txt
-        # dnsx -silent -list xx.txt  域名探活
+        # dnsx -silent -list xx.txt
 
     @logger.catch
     def ctfr():
@@ -421,7 +395,6 @@ def manager(domain=None, date="2022-09-02-00-01-39"):
         #         subdomains_tmp.append(line.strip())
         # subdomains.extend(list(set(subdomains_tmp)))
 
-    # 最后调用oneforall,同时将所有其他文件的结果发给oneforall，即subdomains->list 中的子域名
     @logger.catch
     def oneforall():
         '''
@@ -439,7 +412,6 @@ def manager(domain=None, date="2022-09-02-00-01-39"):
         # cmd = cmdstr.split(' ')
         # subprocess.Popen(cmd=cmd)
 
-    # 整合各个工具扫出的子域名结果,除了oneforall
     @logger.catch
     def merge_other_tools_result():
         '''
@@ -458,7 +430,6 @@ def manager(domain=None, date="2022-09-02-00-01-39"):
                     f"result/temp/{domain}.many.tools.subdomain.txt")
         # logger.error(f'result/{date}/{domain}.many.tools.subdomain.txt not exist!!!')
 
-    # 将结果合并到一起 result/{date}/{domain}_final_subdomains.txt
     @logger.catch
     def merge_result():
         subdomains_list = []
@@ -487,19 +458,16 @@ def manager(domain=None, date="2022-09-02-00-01-39"):
         logger.info(f'[+] Final find subdomains outputfile: result/{date}/{domain}.final.subdomains.txt')
 
     def run():
-        # 指定开始扫描的目标
         # progress_control(module='domain_scan',target=domain,date=date)
         # 判断是否泛解析
         if checkPanAnalysis(domain) is False:
             if progress_record(date=date, target=domain,module="domain",finished=False) is False:
-                # 调用那些子域名工具
                 amass()
                 # ksubdomain()
                 ## ShuiZe()
                 ## dnsx()
-                subfinder()  # 被动dns扫描
+                subfinder()
                 ctfr()
-                # 汇总以上函数结果，合到txt中，注意上面的如果不执行
                 merge_other_tools_result()
                 oneforall()
                 # 整合结果输出最终子域名文件 result/{date}/{domain}_final_subdomains.txt
@@ -507,7 +475,6 @@ def manager(domain=None, date="2022-09-02-00-01-39"):
                 progress_record(date=date,target=domain,module="domain",finished=True)
         else:
             logger.error(f"PanAnalysis: {domain}")
-        # # 指定开始扫描的目标
         # progress_control(module='domain_scan',finished=True,date=date)
 
     run()

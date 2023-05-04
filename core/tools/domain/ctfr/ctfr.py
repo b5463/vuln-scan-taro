@@ -1,11 +1,6 @@
 
 # !/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-------------------------------------------------------------------------------
-	CTFR - 04.03.18.02.10.00 - Sheila A. Berta (UnaPibaGeek)
-------------------------------------------------------------------------------
-"""
 
 ## # LIBRARIES # ##
 import re
@@ -20,21 +15,6 @@ version = 1.2
 
 
 ## # MAIN FUNCTIONS # ##
-
-
-# def banner():
-#     global version
-#     b = '''
-#           ____ _____ _____ ____
-#          / ___|_   _|  ___|  _ \
-#         | |     | | | |_  | |_) |
-#         | |___  | | |  _| |  _ <
-#          \____| |_| |_|   |_| \_\\
-#
-#      Version {v} - Hey don't miss AXFR!
-#     Made by Sheila A. Berta (UnaPibaGeek)
-# 	'''.format(v=version)
-#     print(b)
 
 
 # def clear_url(target):

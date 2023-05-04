@@ -69,7 +69,6 @@ def isexist(filepath):
         return False
 
 
-# 进度记录,基于json
 def progress_record(date=None,target=None,module=None,value=None,finished=False):
     logfile = f"result/{date}/log.json"
     if os.path.exists(logfile) is False:
@@ -77,7 +76,6 @@ def progress_record(date=None,target=None,module=None,value=None,finished=False)
     with open(logfile, "r", encoding="utf-8") as f1:
         log_json = json.loads(f1.read())
     if finished is False:
-        # 读取log.json 如果是false则扫描，是true则跳过
         if log_json[module] is False:
             return False
         elif log_json[module] is True:# 即log_json[module] 为true的情况
@@ -89,7 +87,6 @@ def progress_record(date=None,target=None,module=None,value=None,finished=False)
         return True
 
 
-# 获取ip并去重
 @logger.catch
 def getips(ipstr_list):
     ipstr_list = list(set(ipstr_list))
@@ -118,15 +115,12 @@ def manager(domain=None, url=None, urlsfile=None, date="2022-09-02-00-01-39"):
     root = os.getcwd()
     pwd_and_file = os.path.abspath(__file__)
     pwd = os.path.dirname(pwd_and_file)  # E:\ccode\python\006_lunzi\core\tools\domain
-    # 获取当前目录的前三级目录，即到domain目录下，来寻找exe domain目录下
     grader_father = os.path.abspath(os.path.dirname(pwd_and_file) + os.path.sep + "../..")
     logger.info('-' * 10 + f'start {__file__}' + '-' * 10)
-    # 创建存储子域名工具扫描结果的文件夹
     finger_log_folder = f"result/{date}/fingerlog"
     if os.path.exists(finger_log_folder) is False:
         os.makedirs(finger_log_folder)
 
-    # 两种模式,三种情况
     # if domain and urlsfile is None and url is None:
     #     urlsfile = f"result/{date}/{domain}.final.subdomains.txt"
     # if domain is None and urlsfile and url is None:
@@ -137,7 +131,6 @@ def manager(domain=None, url=None, urlsfile=None, date="2022-09-02-00-01-39"):
     #     with open(urlsfile, "w", encoding="utf-8") as f:
     #         f.write(url)
 
-    # 生成带http的域名url 和ip文件 result/{date}/{domain}.subdomains_with_http.txt result/{date}/{domain}.subdomains_ips.txt
     @logger.catch
     def httpx(domain=domain,url=url, file=urlsfile):
         '''
@@ -158,7 +151,6 @@ def manager(domain=None, url=None, urlsfile=None, date="2022-09-02-00-01-39"):
             # print(1,domain,file)
         elif file and domain is None and url is None:
             inputfile = file
-            # 如果从文件输入则结果以时间为文件名
             output_filename_prefix = date
             # domain = date
             # print(2,domain,file)
@@ -182,7 +174,6 @@ def manager(domain=None, url=None, urlsfile=None, date="2022-09-02-00-01-39"):
         logger.info(f"[+] command:{cmdstr}")
         os.system(cmdstr)
         logger.info(f"[+] Generate file: {output_folder}/{output_filename_prefix}.{sys._getframe().f_code.co_name}.csv")
-        # 生成带http的url
         with open(f"{output_folder}/{output_filename_prefix}.{sys._getframe().f_code.co_name}.csv", 'r',
                   errors='ignore') as f:
             reader = csv.reader(f)
@@ -191,20 +182,17 @@ def manager(domain=None, url=None, urlsfile=None, date="2022-09-02-00-01-39"):
                 subdomains_with_http.append(row[8].strip())  # url
                 subdomains_ips_tmp.append(row[18].strip())  # host
             subdomains_ips = getips(list(set(subdomains_ips_tmp)))
-        # 生成带http的url txt
         with open(f"result/{date}/{output_filename_prefix}.subdomains.with.http.txt", "w", encoding="utf-8") as f2:
             f2.writelines("\n".join(subdomains_with_http))
         logger.info(f"[+] Generate file: result/{date}/{output_filename_prefix}.subdomains.with.http.txt")
-        # 生成子域名对应的ip txt
         with open(f"result/{date}/{output_filename_prefix}.subdomains.ips.txt", "w", encoding="utf-8") as f3:
             f3.writelines("\n".join(subdomains_ips))
         logger.info(f"[+] Generate file: result/{date}/{output_filename_prefix}.subdomains.ips.txt")
-        # 最后移除临时文件
         if url and domain is None and file is None:
             if os.path.exists(inputfile):
                 os.remove(inputfile)
 
-    # 进行指纹识别 result/{date}/ehole_log/{domain}.ehole.xlsx
+    # result/{date}/ehole_log/{domain}.ehole.xlsx
     @logger.catch
     def ehole(url=url, file=urlsfile):
         '''
@@ -213,7 +201,6 @@ def manager(domain=None, url=None, urlsfile=None, date="2022-09-02-00-01-39"):
         :return:
         '''
         logger.info('-' * 10 + f'start {sys._getframe().f_code.co_name}' + '-' * 10)
-        # 创建该工具的结果文件夹
         # output_folder = f"result/{date}/{sys._getframe().f_code.co_name}_log"
         output_folder = f'{finger_log_folder}/{sys._getframe().f_code.co_name}log'
         if os.path.exists(output_folder) is False:
@@ -224,7 +211,6 @@ def manager(domain=None, url=None, urlsfile=None, date="2022-09-02-00-01-39"):
             output_filename = f'{domain.replace(".", "-")}-{sys._getframe().f_code.co_name}'
         elif file and domain is None and url is None:
             inputfile = file
-            # 如果从文件输入则结果以时间为文件名
             output_filename = date
         elif url and domain is None and file is None:
             # domain = date
@@ -240,7 +226,6 @@ def manager(domain=None, url=None, urlsfile=None, date="2022-09-02-00-01-39"):
         logger.info(f"[+] command:{cmd}")
         os.system(cmd)
         logger.info(f"[+] Generate file: {output_folder}/{output_filename}.xlsx")
-        # 最后移除临时文件
         if url and domain is None and file is None:
             if os.path.exists(inputfile):
                 os.remove(inputfile)
@@ -255,7 +240,6 @@ def manager(domain=None, url=None, urlsfile=None, date="2022-09-02-00-01-39"):
         :return:
         '''
         logger.info('-' * 10 + f'start {sys._getframe().f_code.co_name}' + '-' * 10)
-        # 创建该工具的结果文件夹
         # output_folder = f"result/{date}/{sys._getframe().f_code.co_name}_log"
         output_folder = f'{finger_log_folder}/{sys._getframe().f_code.co_name}log'
         if os.path.exists(output_folder) is False:
@@ -266,7 +250,6 @@ def manager(domain=None, url=None, urlsfile=None, date="2022-09-02-00-01-39"):
             output_filename = f'{domain}.{sys._getframe().f_code.co_name}'
         elif file and domain is None and url is None:
             inputfile = file
-            # 如果从文件输入则结果以时间为文件名
             output_filename = date
             # domain = date
         elif url and domain is None and file is None:
@@ -293,7 +276,6 @@ def manager(domain=None, url=None, urlsfile=None, date="2022-09-02-00-01-39"):
         finger_list = []
 
         result_str = ''
-        # 对打印结果进行处理，将结果拼成字符串，然后分割存入csv
         for i in range(7, len(result1)):
             result_str += result1[i].decode().strip()
         tmp = re.split('http[s]?://', result_str, flags=re.I)
@@ -302,13 +284,11 @@ def manager(domain=None, url=None, urlsfile=None, date="2022-09-02-00-01-39"):
             # tmp2 = [domain].extend(tmp2)
             finger_list.append(tmp2)
             print(tmp2)
-        # 分割好的写入csv文件
         with open(f'{output_folder}/{output_filename}.csv', 'w', encoding='utf-8') as f:
             writer = csv.writer(f)
             writer.writerows(finger_list)
         logger.info(f"[+] Generate file: {output_folder}/{output_filename}.csv")
 
-        # 最后移除临时文件
         if url and domain is None and file is None:
             if os.path.exists(inputfile):
                 os.remove(inputfile)
